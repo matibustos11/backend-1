@@ -1,6 +1,9 @@
 import paths from "../utils/paths.js";
 import { readJsonFile, writeJsonFile } from "../utils/fileHandler.js";
 import { generateId } from "../utils/collectionHandler.js";
+import { convertToBool } from "../utils/converter.js";
+import ErrorManager from "../managers/ErrorManager.js";
+
 
 export default class ProductManager {
     #jsonFilename;
@@ -15,8 +18,9 @@ export default class ProductManager {
         const productFound = this.#products.find((item) => item.id === Number(id));
 
         if (!productFound) {
-            throw new Error("Id no encontrado");
+            throw new ErrorManager("Id no encontrado", 404);
         }
+        return productFound;
     }
 
     async getAll() {
@@ -24,7 +28,7 @@ export default class ProductManager {
             this.#products = await readJsonFile(paths.files, this.#jsonFilename);
             return this.#products;
         } catch (error) {
-            throw new Error("Falló al obtener todos los productos");
+            throw new ErrorManager(error.message, error.code);
         }
     }
 
@@ -33,16 +37,19 @@ export default class ProductManager {
             const productFound = await this.$findOneById(id);
             return productFound;
         } catch (error) {
-            throw new Error("Falló al obtener el producto");
-        }
+            throw new ErrorManager(error.message, error.code);        }
     }
 
-    async insertOne(data) {
+    async insertOne(data, file) {
         try {
-            const { title, description, code, price, status, stock, category, thumbnail } = data;
+            const { title, description, code, price, status, stock, category } = data;
 
-            if (!title || status === undefined || status === null || !stock || !description || !code || !price || !category || !thumbnail ) {
-                throw new Error("Faltan datos obligatorios");
+            if (!title || status === undefined || status === null || !stock || !description || !code || !price || !category ) {
+                throw new ErrorManager("Faltan datos obligatorios", 400);
+            }
+
+            if (!file?.filename) {
+                throw new ErrorManager("Falta el archivo de la imagen", 400);
             }
 
             const product = {
@@ -51,44 +58,68 @@ export default class ProductManager {
                 description,
                 code,
                 price,
-                status,
-                stock,
+                status: convertToBool(status),
+                stock: Number(stock),
                 category,
-                thumbnail,
+                thumbnail: file?.filename,
             }
 
             this.#products.push(product);
             await writeJsonFile(paths.files, this.#jsonFilename, this.#products)
 
-            return productFound;
+            return product;
         } catch (error) {
-            throw new Error("Falló al agregar un producto productos");
+            if (file?.filename) await deleteFile(paths.images, file.filename);
+            throw new ErrorManager(error.message, error.code);
         }
     }
 
-    async updateOneById(id, data) {
+    async updateOneById(id, data, file) {
         try {
-            const { title, description, code, price, status, stock, category, thumbnail } = data;
-            const productFound = await this.$findOneById(id); 
+            const { title, description, code, price, status, stock, category } = data;
+            const productFound = await this.$findOneById(id);
+            const newThumbnail = file?.filename;
 
             const product = {
                 id: productFound.id,
-                title: title ? title : productFound.title,
-                description: description ? description : productFound.description,
-                code: code ? code : productFound.code,
-                price,
-                status,
-                stock,
-                category,
-                thumbnail,
+                title: title || productFound.title,
+                description: description || productFound.description,
+                code: code || productFound.code,
+                price: price || productFound.price,
+                status: status ? convertToBool(status) : productFound.status,
+                stock: stock ? Number(stock) : productFound.stock,
+                category: category || productFound.category,
+                thumbnail: newThumbnail || productFound.thumbnail,
+            };
+
+            const index = this.#products.findIndex((item) => item.id === Number(id));
+            this.#products[index] = product;
+            await writeJsonFile(paths.files, this.#jsonFilename, this.#products);
+
+            if (file?.filename && newThumbnail !== productFound.thumbnail) {
+                await deleteFile(paths.images, productFound.thumbnail);
             }
 
-            this.#products.push(product);
-            await writeJsonFile(paths.files, this.#jsonFilename, this.#products)
-
-            return productFound;
+            return product;
         } catch (error) {
-            throw new Error("Falló al agregar un producto productos");
+            if (file?.filename) await deleteFile(paths.images, file.filename);
+            throw new ErrorManager(error.message, error.code);
+        }
+    }
+
+    async deleteOneById(id) {
+        try {
+            const productFound = await this.$findOneById(id);
+            
+            if (productFound.thumbnail) {
+                await deleteFile(paths.images, ingredientFound.thumbnail);
+            }
+
+            const index = this.#products.findIndex((item) => item.id === Number(id));
+            this.#products.splice(index, 1);
+            await writeJsonFile(paths.files, this.#jsonFilename, this.#products);
+        } catch (error) {
+            throw new ErrorManager(error.message, error.code);
         }
     }
 

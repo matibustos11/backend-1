@@ -1,38 +1,58 @@
 import { Router } from "express";
 import uploader from "../utils/uploader.js";
+import ProductManager from "../managers/ProductManager.js";
 
 const router = Router ();
-const products = [];
+const productManager = new ProductManager();
 
-router.get("/", (req, res) => {
-    res.status(200).json({ status: "succes", payload: pets});
-});
-
-router.post("/", uploader.single("file"), (req, res) => {
-    const { name, specie } = req.body;
-    const { file } = req;
-
-    if (!file) {
-        return res.status(400).json({ status: "error", message: "Archivo no encontrado"});
+router.get("/", async (req, res) => {
+    try {
+        const products = await productManager.getAll();
+        res.status(200).json({ status: "succes", payload: products});
+    } catch (error) {
+        res.status(error.code || 500).json({ status: "error", message: error.message });
     }
-
-    const pet = {
-        name,
-        specie,
-        thumbnail: file.filename,
-    };
-
-    pets.push(pet);
-
-    res.status(201).json({ status: "succes", payload: pet});
+    
 });
 
-router.post("/:index/code", (req, res) => {
-    const { index } = req.params;
-    const { code } = req.body;
+router.get("/:pid", async (req, res) => {
+    try {
+        const product = await productManager.getOneById(req.params?.id);
+        res.status(200).json({ status: "succes", payload: product});
+    } catch (error) {
+        res.status(error.code || 500).json({ status: "error", message: error.message });
+    }
+    
+});
 
-    pets[index].code = code;
-    res.status(201).json({ status: "succes", payload: pets[index] });
+router.post("/", uploader.single("file"), async (req, res) => {
+    try {
+        const product = await productManager.insertOne(req.body, req.file);
+        res.status(201).json({ status: "succes", payload: product});
+    } catch (error) {
+        res.status(error.code || 500).json({ status: "error", message: error.message });
+    }
+    
+});
+
+router.put("/:pid", uploader.single("file"),  async (req, res) => {
+    try {
+        const product = await productManager.updateOneById(req.params?.id, req.body, req.file);
+        res.status(200).json({ status: "succes", payload: product});
+    } catch (error) {
+        res.status(error.code || 500).json({ status: "error", message: error.message });
+    }
+    
+});
+
+router.delete("/:pid", async (req, res) => {
+    try {
+        await productManager.deleteOneById(req.params?.id);
+        res.status(200).json({ status: "succes"});
+    } catch (error) {
+        res.status(error.code || 500).json({ status: "error", message: error.message });
+    }
+    
 });
 
 export default router;
