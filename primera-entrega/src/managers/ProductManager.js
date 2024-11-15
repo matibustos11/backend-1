@@ -13,7 +13,7 @@ export default class ProductManager {
         this.#jsonFilename = "products.json";
     }
 
-    async $findOneById() {
+    async $findOneById(id) {
         this.#products = await this.getAll();
         const productFound = this.#products.find((item) => item.id === Number(id));
 
@@ -40,17 +40,17 @@ export default class ProductManager {
             throw new ErrorManager(error.message, error.code);        }
     }
 
-    async insertOne(data, file) {
+    async insertOne(data) {
         try {
             const { title, description, code, price, status, stock, category } = data;
 
-            if (!title || status === undefined || status === null || !stock || !description || !code || !price || !category ) {
+            if (!title || !status || !stock || !description || !code || !price || !category ) {
                 throw new ErrorManager("Faltan datos obligatorios", 400);
             }
 
-            if (!file?.filename) {
-                throw new ErrorManager("Falta el archivo de la imagen", 400);
-            }
+            // if (!file?.filename) {
+            //     throw new ErrorManager("Falta el archivo de la imagen", 400);
+            // }
 
             const product = {
                 id: generateId(await this.getAll()),
@@ -61,7 +61,7 @@ export default class ProductManager {
                 status: convertToBool(status),
                 stock: Number(stock),
                 category,
-                thumbnail: file?.filename,
+                // thumbnail: file?.filename,
             }
 
             this.#products.push(product);
@@ -69,16 +69,16 @@ export default class ProductManager {
 
             return product;
         } catch (error) {
-            if (file?.filename) await deleteFile(paths.images, file.filename);
+            // if (file?.filename) await deleteFile(paths.images, file.filename);
             throw new ErrorManager(error.message, error.code);
         }
     }
 
-    async updateOneById(id, data, file) {
+    async updateOneById(id, data) {
         try {
             const { title, description, code, price, status, stock, category } = data;
             const productFound = await this.$findOneById(id);
-            const newThumbnail = file?.filename;
+            // const newThumbnail = file?.filename;
 
             const product = {
                 id: productFound.id,
@@ -89,20 +89,20 @@ export default class ProductManager {
                 status: status ? convertToBool(status) : productFound.status,
                 stock: stock ? Number(stock) : productFound.stock,
                 category: category || productFound.category,
-                thumbnail: newThumbnail || productFound.thumbnail,
+                // thumbnail: newThumbnail || productFound.thumbnail,
             };
 
             const index = this.#products.findIndex((item) => item.id === Number(id));
             this.#products[index] = product;
             await writeJsonFile(paths.files, this.#jsonFilename, this.#products);
 
-            if (file?.filename && newThumbnail !== productFound.thumbnail) {
-                await deleteFile(paths.images, productFound.thumbnail);
-            }
+            // if (file?.filename && newThumbnail !== productFound.thumbnail) {
+            //     await deleteFile(paths.images, productFound.thumbnail);
+            // }
 
             return product;
         } catch (error) {
-            if (file?.filename) await deleteFile(paths.images, file.filename);
+            // if (file?.filename) await deleteFile(paths.images, file.filename);
             throw new ErrorManager(error.message, error.code);
         }
     }

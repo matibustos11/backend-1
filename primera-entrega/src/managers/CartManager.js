@@ -12,7 +12,7 @@ export default class CartManager {
         this.#jsonFilename = "carts.json";
     }
 
-    async $findOneById() {
+    async $findOneById(id) {
         this.#carts = await this.getAll();
         const cartFound = this.#carts.find((item) => item.id === Number(id));
 
@@ -54,21 +54,21 @@ export default class CartManager {
             this.#carts.push(cart);
             await writeJsonFile(paths.files, this.#jsonFilename, this.#carts)
 
-            return cartFound;
+            return cart;
         } catch (error) {
             throw new ErrorManager(error.message, error.code);
         }
     }
 
-    addOneproduct = async (id, productId) => {
+    addOneProduct = async (id, productId, quantity = 1) => {
         try {
             const cartFound = await this.$findOneById(id);
             const productIndex = cartFound.products.findIndex((item) => item.product === Number(productId));
 
             if (productIndex >= 0) {
-                cartFound.products[productIndex].quantity++;
+                cartFound.products[productIndex].quantity += quantity;
             } else {
-                cartFound.products.push({ product: Number(productId), quantity: 1 });
+                cartFound.products.push({ product: Number(productId), quantity });
             }
 
             const index = this.#carts.findIndex((item) => item.id === Number(id));

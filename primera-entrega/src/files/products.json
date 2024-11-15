@@ -1,0 +1,22 @@
+[
+	{
+		"id": 1,
+		"title": "Mortal Kombat",
+		"description": "juego",
+		"code": "123",
+		"price": "700",
+		"status": true,
+		"stock": 10,
+		"category": "juego"
+	},
+	{
+		"id": 2,
+		"title": "Mario Kart",
+		"description": "juego",
+		"code": "123",
+		"price": "500",
+		"status": true,
+		"stock": 5,
+		"category": "juego"
+	}
+]

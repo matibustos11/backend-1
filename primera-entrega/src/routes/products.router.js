@@ -15,7 +15,7 @@ router.get("/", async (req, res) => {
     
 });
 
-router.get("/:pid", async (req, res) => {
+router.get("/:id", async (req, res) => {
     try {
         const product = await productManager.getOneById(req.params?.id);
         res.status(200).json({ status: "succes", payload: product});
@@ -35,7 +35,7 @@ router.post("/", uploader.single("file"), async (req, res) => {
     
 });
 
-router.put("/:pid", uploader.single("file"),  async (req, res) => {
+router.put("/:id", uploader.single("file"),  async (req, res) => {
     try {
         const product = await productManager.updateOneById(req.params?.id, req.body, req.file);
         res.status(200).json({ status: "succes", payload: product});
@@ -45,7 +45,7 @@ router.put("/:pid", uploader.single("file"),  async (req, res) => {
     
 });
 
-router.delete("/:pid", async (req, res) => {
+router.delete("/:id", async (req, res) => {
     try {
         await productManager.deleteOneById(req.params?.id);
         res.status(200).json({ status: "succes"});

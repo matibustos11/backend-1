@@ -15,7 +15,7 @@ router.get("/", async (req, res) => {
     
 });
 
-router.get("/:cid", async (req, res) => {
+router.get("/:id", async (req, res) => {
     try {
         const cart = await cartManager.getOneById(req.params?.id);
         res.status(200).json({ status: "succes", payload: cart});
@@ -37,7 +37,7 @@ router.post("/", uploader.single("file"), async (req, res) => {
     
 });
 
-router.post("/:cid/ingredients/:pid", async (req, res) => {
+router.post("/:cid/products/:pid", async (req, res) => {
     try {
         const { cid, pid } = req.params;
         const { quantity } = req.body;
