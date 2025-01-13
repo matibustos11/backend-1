@@ -2,6 +2,7 @@ import express from "express";
 import paths from "./utils/paths.js";
 import { config as configHandlebars } from "./config/handlebars.config.js";
 import { config as configWebsocket } from "./config/websocket.config.js";
+import { connectDB } from "./config/mongoose.config.js";
 
 //Importacion de enrutadores
 import routerProducts from "./routes/products.router.js";
@@ -13,6 +14,8 @@ const app = express();
 
 // Se define el puerto en el que el servidor escuchará las solicitudes
 const PORT = 8080;
+
+connectDB();
 
 //Declaración de archivos estáticos desde la carpeta 'public'
 app.use("/api/public", express.static(paths.public));
