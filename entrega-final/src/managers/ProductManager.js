@@ -29,15 +29,17 @@ export default class ProductManager {
             const $and = [];
 
             if (params?.title) $and.push({ title: { $regex: params.title, $options: "i" } });
+            if (params?.category) $and.push({ category: { $regex: params.category, $options: "i" } });
+            if (params?.status) $and.push({ status: convertToBool(params.status) });
             const filters = $and.length > 0 ? { $and } : {};
 
             const sort = {
-                asc: { title: 1 },
-                desc: { title: -1 },
+                asc: { price: 1 },
+                desc: { price: -1 },
             };
 
             const paginationOptions = {
-                limit: params?.limit || 5,
+                limit: params?.limit || 4,
                 page: params?.page || 1,
                 sort: sort[params?.sort] ?? {},
                 lean: true,
@@ -79,14 +81,16 @@ export default class ProductManager {
             if (!product) {
                 throw new Error("Producto no encontrado");
             }
-            Object.keys(data).forEach((key) => {
-                if (data[key] !== undefined && data[key] !== null && data[key] !== "") {
-                    product[key] = key === "status" ? convertToBool(data[key]) : data[key];
-                }
-            });
-    
-            const updatedProduct = await product.save();
-            return updatedProduct;
+            const newValues = {
+                ...product,
+                ...data,
+                status: data.status ? convertToBool(data.status) : product.status,
+            };
+
+            product.set(newValues);
+            product.save();
+
+            return product;
         } catch (error) {
             throw ErrorManager.handleError(error);
         }
@@ -96,6 +100,10 @@ export default class ProductManager {
         try {
             const product = await this.#findOneById(id);
             await product.deleteOne();
+
+            if (productFound.thumbnail) {
+                await deleteFile(paths.images, productFound.thumbnail);
+            }
         } catch (error) {
             throw ErrorManager.handleError(error);
         }

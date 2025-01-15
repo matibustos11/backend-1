@@ -23,7 +23,7 @@ const errorMessage = document.getElementById("error-message");
 
 
 socket.on("products-list", (data) => {
-    const products = data.products || [];
+    const products = data.products.docs ?? [];
 
     productsList.innerText = "";
 

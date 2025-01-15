@@ -26,7 +26,7 @@ export default class CartManager {
     async getAll(params) {
         try {
             const paginationOptions = {
-                limit: params?.limit || 10,
+                limit: params?.limit || 4,
                 page: params?.page || 1,
                 populate: "products.product",
                 lean: true,
@@ -55,17 +55,33 @@ export default class CartManager {
         }
     }
 
-    async addOneProduct(id, productId) {
+    async updateOneById(id, data) {
+        try{
+            const cart = await this.#findOneById(id);
+            const newValues = {
+                ...cart,
+                ...data,
+            };
+
+            cart.set(newValues);
+            cart.save();
+
+            return cart;
+        } catch (error) {
+            throw ErrorManager.handleError(error);
+        }
+    }
+
+    async addOneProduct(id, productId, quantity) {
         try {
             const cart = await this.#findOneById(id);
             const productIndex = cart.products.findIndex((item) => item.product._id.toString() === productId);
 
-            if (productIndex >= 0) {
-                cart.products[productIndex].quantity++;
-            } else {
-                cart.products.push({ product: productId, quantity: 1 });
-            }
+            if (productIndex < 0) {
+                throw new ErrorManager("ID de producto no encontrado", 404)
+            } 
 
+            cart.products[productIndex].quantity = quantity;
             await cart.save();
 
             return cart;
